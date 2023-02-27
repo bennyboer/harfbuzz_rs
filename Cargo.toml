@@ -18,4 +18,4 @@ edition = "2018"
 [dependencies]
 rusttype = { version = "0.9.3", optional = true }
 bitflags = "^1"
-harfbuzz-bindings = "0.1.1"
+harfbuzz-bindings = "0.1.2"
