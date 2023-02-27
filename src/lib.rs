@@ -261,7 +261,10 @@ pub fn shape(font: &Font<'_>, buffer: UnicodeBuffer, features: &[Feature]) -> Gl
 
 #[cfg(test)]
 mod tests {
+    use std::fs;
     use std::mem::{align_of, size_of};
+
+    use crate::{Face, Font, UnicodeBuffer};
 
     use super::{Feature, Tag};
 
@@ -302,5 +305,16 @@ mod tests {
 
         let feature = Feature::new(tag, 100, ..);
         assert_feature(feature, tag, 100, 0, UINT_MAX);
+    }
+
+    #[test]
+    fn subset() {
+        let font_path = "testfiles/SourceSansVariable-Roman.ttf";
+        let font_face_index = 0;
+        let font_face = Face::from_file(font_path, font_face_index).unwrap();
+        let font = Font::new(font_face);
+
+        let result = super::subset(&font);
+        fs::write("result.ttf", result).expect("could not write subset font");
     }
 }
