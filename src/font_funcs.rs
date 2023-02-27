@@ -7,7 +7,16 @@
 //!
 //! In the future there may be exposed other ways to create font funcs.
 
-use crate::bindings::{
+use std;
+use std::ffi::{CStr, CString};
+use std::fmt;
+use std::io::Write;
+use std::marker::PhantomData;
+use std::os::raw::c_void;
+use std::panic;
+use std::ptr::NonNull;
+
+use harfbuzz_bindings::{
     hb_bool_t, hb_codepoint_t, hb_font_extents_t, hb_font_funcs_create, hb_font_funcs_destroy,
     hb_font_funcs_get_empty, hb_font_funcs_reference, hb_font_funcs_set_font_h_extents_func,
     hb_font_funcs_set_font_v_extents_func, hb_font_funcs_set_glyph_contour_point_func,
@@ -17,18 +26,9 @@ use crate::bindings::{
     hb_font_funcs_set_glyph_v_origin_func, hb_font_funcs_set_nominal_glyph_func,
     hb_font_funcs_set_variation_glyph_func, hb_font_funcs_t, hb_font_t, hb_glyph_extents_t,
 };
-use crate::font::destroy_box;
+
 use crate::{Font, FontExtents, Glyph, GlyphExtents, HarfbuzzObject, Owned, Position, Shared};
-
-use std::os::raw::c_void;
-
-use std;
-use std::ffi::{CStr, CString};
-use std::fmt;
-use std::io::Write;
-use std::marker::PhantomData;
-use std::panic;
-use std::ptr::NonNull;
+use crate::font::destroy_box;
 
 /// This Trait specifies the font callbacks that harfbuzz uses for its shaping.
 ///
@@ -458,8 +458,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_font_h_extents_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T) -> Option<FontExtents>,
+        where
+            F: Fn(&Font<'_>, &T) -> Option<FontExtents>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -473,8 +473,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_font_v_extents_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T) -> Option<FontExtents>,
+        where
+            F: Fn(&Font<'_>, &T) -> Option<FontExtents>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -488,8 +488,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_nominal_glyph_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, char) -> Option<Glyph>,
+        where
+            F: Fn(&Font<'_>, &T, char) -> Option<Glyph>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -503,8 +503,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_variation_glyph_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, char, char) -> Option<Glyph>,
+        where
+            F: Fn(&Font<'_>, &T, char, char) -> Option<Glyph>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -518,8 +518,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_h_advance_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Position,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Position,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -533,8 +533,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_v_advance_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Position,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Position,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -548,8 +548,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_h_origin_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Option<(Position, Position)>,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Option<(Position, Position)>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -563,8 +563,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_v_origin_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Option<(Position, Position)>,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Option<(Position, Position)>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -578,8 +578,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_extents_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Option<GlyphExtents>,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Option<GlyphExtents>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -593,8 +593,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_contour_point_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph, u32) -> Option<(Position, Position)>,
+        where
+            F: Fn(&Font<'_>, &T, Glyph, u32) -> Option<(Position, Position)>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -608,8 +608,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_name_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, Glyph) -> Option<String>,
+        where
+            F: Fn(&Font<'_>, &T, Glyph) -> Option<String>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -623,8 +623,8 @@ impl<T> FontFuncsImpl<T> {
     }
 
     pub fn set_glyph_from_name_func<F>(&mut self, func: F)
-    where
-        F: Fn(&Font<'_>, &T, &str) -> Option<Glyph>,
+        where
+            F: Fn(&Font<'_>, &T, &str) -> Option<Glyph>,
     {
         let user_data = Box::new(func);
         unsafe {
@@ -670,4 +670,5 @@ unsafe impl<T> HarfbuzzObject for FontFuncsImpl<T> {
 }
 
 unsafe impl<T> Send for FontFuncsImpl<T> {}
+
 unsafe impl<T> Sync for FontFuncsImpl<T> {}

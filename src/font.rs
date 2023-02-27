@@ -1,9 +1,10 @@
 use std;
+use std::ffi::CStr;
+use std::marker::PhantomData;
+use std::os::raw::c_void;
 use std::ptr::NonNull;
 
-use std::os::raw::c_void;
-
-use crate::bindings::{
+use harfbuzz_bindings::{
     hb_font_create, hb_font_create_sub_font, hb_font_destroy, hb_font_extents_t, hb_font_get_empty,
     hb_font_get_face, hb_font_get_glyph_contour_point, hb_font_get_glyph_extents,
     hb_font_get_glyph_from_name, hb_font_get_glyph_h_advance, hb_font_get_glyph_h_origin,
@@ -13,14 +14,12 @@ use crate::bindings::{
     hb_font_set_funcs, hb_font_set_ppem, hb_font_set_scale, hb_font_set_variations, hb_font_t,
     hb_glyph_extents_t, hb_position_t,
 };
+
 use crate::common::{HarfbuzzObject, Owned, Shared};
 use crate::face::Face;
 pub use crate::font_funcs::FontFuncs;
 use crate::font_funcs::FontFuncsImpl;
 use crate::Variation;
-
-use std::ffi::CStr;
-use std::marker::PhantomData;
 
 pub type Glyph = u32;
 pub type Position = hb_position_t;
@@ -247,8 +246,8 @@ impl<'a> Font<'a> {
     /// Sets the font functions that this font will have from a value that
     /// implements [`FontFuncs`].
     pub fn set_font_funcs<FuncsType>(&mut self, funcs: FuncsType)
-    where
-        FuncsType: 'a + Send + Sync + FontFuncs,
+        where
+            FuncsType: 'a + Send + Sync + FontFuncs,
     {
         let funcs_impl: Owned<FontFuncsImpl<FuncsType>> = FontFuncsImpl::from_trait_impl();
         let font_data = Box::new(funcs);
@@ -484,6 +483,7 @@ impl<'a> Font<'a> {
 }
 
 unsafe impl<'a> Send for Font<'a> {}
+
 unsafe impl<'a> Sync for Font<'a> {}
 
 unsafe impl<'a> HarfbuzzObject for Font<'a> {
@@ -523,8 +523,9 @@ impl<'a> Default for Shared<Font<'a>> {
 
 #[cfg(test)]
 mod test {
-    use super::*;
     use crate::tests::assert_memory_layout_equal;
+
+    use super::*;
 
     #[test]
     fn test_font_extents_layout() {

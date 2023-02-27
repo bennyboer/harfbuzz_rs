@@ -1,25 +1,29 @@
-use std::os::raw::c_void;
-
 use std;
-use std::marker::PhantomData;
-
+use std::convert::AsRef;
+use std::convert::From;
 use std::fmt;
 use std::fs;
+use std::marker::PhantomData;
+use std::ops::Deref;
+use std::os::raw::c_void;
 use std::path::Path;
 use std::ptr::NonNull;
 
-use crate::bindings::hb_blob_create;
-use crate::bindings::hb_blob_create_sub_blob;
-use crate::bindings::hb_blob_destroy;
-use crate::bindings::hb_blob_get_data;
-use crate::bindings::hb_blob_get_data_writable;
-use crate::bindings::hb_blob_get_length;
-use crate::bindings::hb_blob_is_immutable;
-use crate::bindings::hb_blob_make_immutable;
-use crate::bindings::hb_blob_reference;
-use crate::bindings::hb_blob_t;
-use crate::bindings::HB_MEMORY_MODE_READONLY;
-use crate::bindings::HB_MEMORY_MODE_WRITABLE;
+use harfbuzz_bindings::{
+    hb_blob_create,
+    hb_blob_create_sub_blob,
+    hb_blob_destroy,
+    hb_blob_get_data,
+    hb_blob_get_data_writable,
+    hb_blob_get_length,
+    hb_blob_is_immutable,
+    hb_blob_make_immutable,
+    hb_blob_reference,
+    hb_blob_t,
+    HB_MEMORY_MODE_READONLY,
+    HB_MEMORY_MODE_WRITABLE,
+};
+
 use crate::common::{HarfbuzzObject, Owned, Shared};
 
 /// A `Blob` manages raw data like e.g. file contents. It refers to a slice of
@@ -44,6 +48,7 @@ pub struct Blob<'a> {
     raw: NonNull<hb_blob_t>,
     marker: PhantomData<&'a [u8]>,
 }
+
 impl<'a> Blob<'a> {
     /// Create a new `Blob` from the slice `bytes`. The blob will not own the
     /// slice's data.
@@ -175,6 +180,7 @@ impl<'a> Blob<'a> {
 }
 
 unsafe impl<'a> Send for Blob<'a> {}
+
 unsafe impl<'a> Sync for Blob<'a> {}
 
 impl<'a> fmt::Debug for Blob<'a> {
@@ -209,7 +215,6 @@ unsafe impl<'a> HarfbuzzObject for Blob<'a> {
     }
 }
 
-use std::ops::Deref;
 impl<'a> Deref for Blob<'a> {
     type Target = [u8];
 
@@ -218,18 +223,15 @@ impl<'a> Deref for Blob<'a> {
     }
 }
 
-use std::convert::AsRef;
 impl<'a> AsRef<[u8]> for Blob<'a> {
     fn as_ref(&self) -> &[u8] {
         self.get_data()
     }
 }
 
-use std::convert::From;
-
 impl<'a, T> From<T> for Shared<Blob<'a>>
-where
-    T: 'a + Send + AsRef<[u8]>,
+    where
+        T: 'a + Send + AsRef<[u8]>,
 {
     fn from(container: T) -> Shared<Blob<'a>> {
         let blob = Blob::with_bytes_owned(container, |t| t.as_ref());
@@ -239,6 +241,8 @@ where
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
     use super::*;
 
     #[test]
@@ -255,7 +259,6 @@ mod tests {
         }
     }
 
-    use std::sync::Arc;
     #[test]
     fn test_arc_to_blob_conversion() {
         let rc_slice: Arc<[u8]> = Arc::new([1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11]);
@@ -284,7 +287,7 @@ mod tests {
             counter += 1;
         }
 
-        std::mem::drop(blob);
+        drop(blob);
         assert_eq!(Arc::strong_count(&rc_slice), 1);
     }
 }

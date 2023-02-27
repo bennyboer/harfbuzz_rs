@@ -1,16 +1,16 @@
 use std;
+use std::marker::PhantomData;
 use std::os::raw::c_void;
+use std::path::Path;
 use std::ptr::NonNull;
 
-use std::marker::PhantomData;
-use std::path::Path;
-
-use crate::bindings::{
+use harfbuzz_bindings::{
     hb_blob_t, hb_face_create, hb_face_create_for_tables, hb_face_destroy, hb_face_get_empty,
     hb_face_get_glyph_count, hb_face_get_index, hb_face_get_upem, hb_face_reference,
     hb_face_reference_blob, hb_face_reference_table, hb_face_set_glyph_count, hb_face_set_upem,
     hb_face_t, hb_tag_t,
 };
+
 use crate::blob::Blob;
 use crate::common::{HarfbuzzObject, Owned, Shared, Tag};
 
@@ -64,8 +64,8 @@ impl<'a> Face<'a> {
     /// Create a new face from a closure that returns a raw
     /// [`Blob`](struct.Blob.html) of table data.
     pub fn from_table_func<'b, F>(func: F) -> Owned<Face<'b>>
-    where
-        F: 'b + Send + Sync + FnMut(Tag) -> Option<Shared<Blob<'b>>>,
+        where
+            F: 'b + Send + Sync + FnMut(Tag) -> Option<Shared<Blob<'b>>>,
     {
         extern "C" fn destroy_box<U>(ptr: *mut c_void) {
             unsafe { Box::from_raw(ptr as *mut U) };
@@ -75,8 +75,8 @@ impl<'a> Face<'a> {
             tag: hb_tag_t,
             user_data: *mut c_void,
         ) -> *mut hb_blob_t
-        where
-            F: FnMut(Tag) -> Option<Shared<Blob<'b>>>,
+            where
+                F: FnMut(Tag) -> Option<Shared<Blob<'b>>>,
         {
             let tag = Tag(tag);
             let closure = unsafe { &mut *(user_data as *mut F) };
@@ -184,6 +184,7 @@ unsafe impl<'a> HarfbuzzObject for Face<'a> {
 }
 
 unsafe impl<'a> Send for Face<'a> {}
+
 unsafe impl<'a> Sync for Face<'a> {}
 
 #[cfg(test)]

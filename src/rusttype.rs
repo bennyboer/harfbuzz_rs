@@ -1,16 +1,17 @@
 //! This module allows you to use rusttype to provide the font operations that harfbuzz needs.
 
-use crate::common::Tag;
-use rusttype::Font as RTFont;
-use rusttype::{GlyphId, Scale};
-
-use crate::face;
-use crate::font;
-use crate::font::{Font, FontFuncs, Glyph as GlyphIndex, GlyphExtents, Position};
-
 use std;
 use std::fmt::Debug;
 use std::str::FromStr;
+use std::sync::Arc;
+
+use rusttype::{GlyphId, Scale};
+use rusttype::Font as RTFont;
+
+use crate::common::Tag;
+use crate::face;
+use crate::font;
+use crate::font::{Font, FontFuncs, Glyph as GlyphIndex, GlyphExtents, Position};
 
 // Work around weird rusttype scaling by reading the hhea table.
 fn get_font_height(font: &font::Font<'_>) -> Option<i32> {
@@ -90,8 +91,6 @@ impl<'a> FontFuncs for ScaledRusttypeFont<'a> {
         Some(glyph.id().0 as GlyphIndex)
     }
 }
-
-use std::sync::Arc;
 
 /// Creates a new HarfBuzz `Font` object that uses RustType to provide font data.
 ///

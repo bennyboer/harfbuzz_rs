@@ -1,32 +1,33 @@
-use crate::bindings::{
-    hb_buffer_add, hb_buffer_add_utf8, hb_buffer_append, hb_buffer_clear_contents,
-    hb_buffer_cluster_level_t, hb_buffer_content_type_t, hb_buffer_create, hb_buffer_destroy,
-    hb_buffer_get_cluster_level, hb_buffer_get_content_type, hb_buffer_get_direction,
-    hb_buffer_get_empty, hb_buffer_get_glyph_infos, hb_buffer_get_glyph_positions,
-    hb_buffer_get_language, hb_buffer_get_length, hb_buffer_get_script,
-    hb_buffer_get_segment_properties, hb_buffer_guess_segment_properties, hb_buffer_pre_allocate,
-    hb_buffer_reference, hb_buffer_reverse, hb_buffer_reverse_range, hb_buffer_serialize_format_t,
-    hb_buffer_serialize_glyphs, hb_buffer_set_cluster_level, hb_buffer_set_content_type,
-    hb_buffer_set_direction, hb_buffer_set_language, hb_buffer_set_script, hb_buffer_t,
-    hb_glyph_flags_t, hb_glyph_info_get_glyph_flags, hb_glyph_info_t, hb_mask_t,
-    hb_script_from_iso15924_tag, hb_script_t, hb_script_to_iso15924_tag, hb_segment_properties_t,
-    hb_var_int_t, HB_BUFFER_CLUSTER_LEVEL_CHARACTERS, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS,
-    HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES, HB_BUFFER_CONTENT_TYPE_GLYPHS,
-    HB_BUFFER_CONTENT_TYPE_UNICODE, HB_BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS,
-    HB_BUFFER_SERIALIZE_FLAG_GLYPH_FLAGS, HB_BUFFER_SERIALIZE_FLAG_NO_ADVANCES,
-    HB_BUFFER_SERIALIZE_FLAG_NO_CLUSTERS, HB_BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES,
-    HB_BUFFER_SERIALIZE_FLAG_NO_POSITIONS, HB_BUFFER_SERIALIZE_FORMAT_JSON,
-    HB_BUFFER_SERIALIZE_FORMAT_TEXT, HB_GLYPH_FLAG_UNSAFE_TO_BREAK,
-};
-use crate::common::{Direction, HarfbuzzObject, Language, Owned, Script, Tag};
-use crate::font::Position;
-
 use fmt::Formatter;
+use std::{fmt, io};
 use std::io::Read;
 use std::os;
 use std::os::raw::c_uint;
 use std::ptr::NonNull;
-use std::{fmt, io};
+
+use harfbuzz_bindings::{
+    hb_buffer_add, hb_buffer_add_utf8, hb_buffer_append, hb_buffer_clear_contents,
+    HB_BUFFER_CLUSTER_LEVEL_CHARACTERS, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_CHARACTERS, HB_BUFFER_CLUSTER_LEVEL_MONOTONE_GRAPHEMES, hb_buffer_cluster_level_t,
+    HB_BUFFER_CONTENT_TYPE_GLYPHS, hb_buffer_content_type_t, HB_BUFFER_CONTENT_TYPE_UNICODE,
+    hb_buffer_create, hb_buffer_destroy, hb_buffer_get_cluster_level,
+    hb_buffer_get_content_type, hb_buffer_get_direction, hb_buffer_get_empty,
+    hb_buffer_get_glyph_infos, hb_buffer_get_glyph_positions, hb_buffer_get_language,
+    hb_buffer_get_length, hb_buffer_get_script, hb_buffer_get_segment_properties, hb_buffer_guess_segment_properties,
+    hb_buffer_pre_allocate, hb_buffer_reference, hb_buffer_reverse,
+    hb_buffer_reverse_range, HB_BUFFER_SERIALIZE_FLAG_GLYPH_EXTENTS, HB_BUFFER_SERIALIZE_FLAG_GLYPH_FLAGS, HB_BUFFER_SERIALIZE_FLAG_NO_ADVANCES,
+    HB_BUFFER_SERIALIZE_FLAG_NO_CLUSTERS, HB_BUFFER_SERIALIZE_FLAG_NO_GLYPH_NAMES, HB_BUFFER_SERIALIZE_FLAG_NO_POSITIONS, HB_BUFFER_SERIALIZE_FORMAT_JSON,
+    hb_buffer_serialize_format_t, HB_BUFFER_SERIALIZE_FORMAT_TEXT, hb_buffer_serialize_glyphs, hb_buffer_set_cluster_level,
+    hb_buffer_set_content_type, hb_buffer_set_direction, hb_buffer_set_language,
+    hb_buffer_set_script, hb_buffer_t,
+    HB_GLYPH_FLAG_UNSAFE_TO_BREAK, hb_glyph_flags_t,
+    hb_glyph_info_get_glyph_flags, hb_glyph_info_t,
+    hb_mask_t, hb_script_from_iso15924_tag,
+    hb_script_t, hb_script_to_iso15924_tag,
+    hb_segment_properties_t, hb_var_int_t,
+};
+
+use crate::common::{Direction, HarfbuzzObject, Language, Owned, Script, Tag};
+use crate::font::Position;
 
 #[derive(Copy, Clone, Debug, PartialEq, Eq, Hash)]
 #[repr(C)]
@@ -103,7 +104,7 @@ impl GlyphPosition {
             y_advance,
             x_offset,
             y_offset,
-            var: hb_var_int_t { u32: 0 },
+            var: hb_var_int_t { u32_: 0 },
         }
     }
 }
@@ -195,6 +196,7 @@ impl Default for ClusterLevel {
 pub(crate) struct GenericBuffer {
     raw: NonNull<hb_buffer_t>,
 }
+
 impl GenericBuffer {
     pub(crate) fn new() -> Owned<GenericBuffer> {
         let buffer = unsafe { hb_buffer_create() };
@@ -379,7 +381,7 @@ impl From<SerializeFormat> for hb_buffer_serialize_format_t {
 bitflags! {
     /// Flags used for serialization with a `BufferSerializer`.
     #[derive(Default)]
-    pub struct SerializeFlags: u32 {
+    pub struct SerializeFlags: i32 {
         /// Do not serialize glyph cluster.
         const NO_CLUSTERS = HB_BUFFER_SERIALIZE_FLAG_NO_CLUSTERS;
         /// Do not serialize glyph position information.
@@ -502,6 +504,7 @@ impl TypedBuffer {
 /// object, you need to use the `from_raw` static method on `TypedBuffer`. This
 /// ensures that a buffer of correct type is created.
 pub struct UnicodeBuffer(pub(crate) Owned<GenericBuffer>);
+
 impl UnicodeBuffer {
     pub(crate) fn from_generic(generic: Owned<GenericBuffer>) -> Self {
         generic.set_content_type(HB_BUFFER_CONTENT_TYPE_UNICODE);
@@ -949,10 +952,12 @@ impl fmt::Display for GlyphBuffer {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-    use crate::bindings::hb_glyph_position_t;
+    use harfbuzz_bindings::hb_glyph_position_t;
+
+    use crate::{Face, Font, shape};
     use crate::tests::assert_memory_layout_equal;
-    use crate::{shape, Face, Font};
+
+    use super::*;
 
     #[test]
     fn test_memory_layouts() {

@@ -1,5 +1,17 @@
+use std;
 use std::borrow::Borrow;
+use std::ffi::CStr;
+use std::fmt;
+use std::fmt::{Debug, Display, Formatter};
 use std::ops::{Deref, DerefMut};
+use std::str::FromStr;
+
+use harfbuzz_bindings::{
+    HB_DIRECTION_BTT, HB_DIRECTION_INVALID, HB_DIRECTION_LTR, HB_DIRECTION_RTL,
+    hb_direction_t, HB_DIRECTION_TTB, hb_language_from_string,
+    hb_language_get_default, hb_language_t, hb_language_to_string, hb_script_from_iso15924_tag, hb_script_get_horizontal_direction,
+    hb_script_t, hb_script_to_iso15924_tag, hb_tag_from_string, hb_tag_t, hb_tag_to_string,
+};
 
 /// A type to represent 4-byte SFNT tags.
 ///
@@ -62,8 +74,6 @@ impl Tag {
     }
 }
 
-use std::fmt;
-use std::fmt::{Debug, Display, Formatter};
 impl Debug for Tag {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = self.tag_to_string();
@@ -111,9 +121,6 @@ pub enum TagFromStrErr {
     /// The string has length zero.
     ZeroLengthString,
 }
-
-use std;
-use std::str::FromStr;
 
 impl FromStr for Tag {
     type Err = TagFromStrErr;
@@ -198,14 +205,6 @@ impl Debug for Language {
     }
 }
 
-use std::ffi::CStr;
-
-use crate::bindings::{
-    hb_direction_t, hb_language_from_string, hb_language_get_default, hb_language_t,
-    hb_language_to_string, hb_script_from_iso15924_tag, hb_script_get_horizontal_direction,
-    hb_script_t, hb_script_to_iso15924_tag, hb_tag_from_string, hb_tag_t, hb_tag_to_string,
-    HB_DIRECTION_BTT, HB_DIRECTION_INVALID, HB_DIRECTION_LTR, HB_DIRECTION_RTL, HB_DIRECTION_TTB,
-};
 impl Display for Language {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         let string = unsafe {
@@ -411,6 +410,7 @@ impl<T: HarfbuzzObject> Drop for Shared<T> {
 }
 
 unsafe impl<T: HarfbuzzObject + Sync + Send> Send for Shared<T> {}
+
 unsafe impl<T: HarfbuzzObject + Sync + Send> Sync for Shared<T> {}
 
 /// A smart pointer that wraps a singly owned harfbuzz object.
@@ -499,11 +499,12 @@ impl<T: HarfbuzzObject> DerefMut for Owned<T> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::cell::Cell;
     use std::mem;
     use std::rc::Rc;
     use std::str::FromStr;
+
+    use super::*;
 
     #[test]
     fn test_tag_debugging() {

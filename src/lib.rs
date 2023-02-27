@@ -76,11 +76,17 @@
 #[macro_use]
 extern crate bitflags;
 
-#[allow(non_camel_case_types)]
-#[allow(non_snake_case)]
-#[allow(deref_nullptr)]
-#[allow(dead_code)]
-mod bindings;
+use std::ops::{Bound, RangeBounds};
+use std::os::raw::c_uint;
+
+use harfbuzz_bindings::{hb_feature_t, hb_shape, hb_variation_t};
+
+pub use crate::blob::*;
+pub use crate::buffer::*;
+pub use crate::common::*;
+pub use crate::face::*;
+pub use crate::font::*;
+
 mod blob;
 mod buffer;
 mod common;
@@ -90,19 +96,6 @@ pub mod font_funcs;
 
 #[cfg(feature = "rusttype")]
 pub mod rusttype;
-
-use bindings::hb_feature_t;
-use bindings::hb_shape;
-use bindings::hb_variation_t;
-
-pub use crate::blob::*;
-pub use crate::buffer::*;
-pub use crate::common::*;
-pub use crate::face::*;
-pub use crate::font::*;
-
-use std::ops::{Bound, RangeBounds};
-use std::os::raw::c_uint;
 
 pub(crate) fn start_end_range(range: impl RangeBounds<usize>) -> (c_uint, c_uint) {
     // We have to do careful bounds checking since c_uint may be of
@@ -268,6 +261,8 @@ pub fn shape(font: &Font<'_>, buffer: UnicodeBuffer, features: &[Feature]) -> Gl
 mod tests {
     use std::mem::{align_of, size_of};
 
+    use super::{Feature, Tag};
+
     pub(crate) fn assert_memory_layout_equal<T, U>() {
         assert_eq!(size_of::<T>(), size_of::<U>());
         assert_eq!(align_of::<T>(), align_of::<U>());
@@ -283,7 +278,6 @@ mod tests {
         assert_eq!(feat.end(), end);
     }
 
-    use super::{Feature, Tag};
     #[test]
     fn feature_new() {
         let tag = b"abcd".into();
