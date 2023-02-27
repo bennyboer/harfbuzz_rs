@@ -86,12 +86,14 @@ pub use crate::buffer::*;
 pub use crate::common::*;
 pub use crate::face::*;
 pub use crate::font::*;
+pub use crate::subset::*;
 
 mod blob;
 mod buffer;
 mod common;
 mod face;
 mod font;
+mod subset;
 pub mod font_funcs;
 
 #[cfg(feature = "rusttype")]
