@@ -4,16 +4,16 @@ use crate::{Blob, Font, HarfbuzzObject};
 
 // TODO Pass in a set of glyph indices to subset + further settings
 // TODO Check https://github.com/sile-typesetter/sile/blob/master/src/justenoughharfbuzz.c for an example on how to pin axes of variable fonts (or https://github.com/ImageMagick/harfbuzz/blob/ad59dba8ad7be4ebbd58de287898aaee7c1f74ef/test/api/test-instance-cff2.c)
-pub fn subset(font: &Font<'_>) -> Vec<u8> {
+pub fn subset(font: &Font<'_>, codepoints: Vec<u32>) -> Vec<u8> {
     let font_face = font.face();
 
     unsafe {
         // Adding glyph indices and further subsetting settings
         let input = hb_subset_input_create_or_fail();
         let unicode_set = hb_subset_input_unicode_set(input);
-        hb_set_add(unicode_set, 97);
-        hb_set_add(unicode_set, 98);
-        hb_set_add(unicode_set, 99);
+        for codepoint in codepoints {
+            hb_set_add(unicode_set, codepoint);
+        }
 
         // TODO Pin axis of variable fonts
 
