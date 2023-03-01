@@ -1,4 +1,6 @@
-use harfbuzz_bindings::{hb_face_reference_blob, hb_set_add, hb_subset_input_create_or_fail, hb_subset_input_destroy, hb_subset_input_unicode_set, hb_subset_or_fail};
+use std::ffi::c_uint;
+
+use harfbuzz_bindings::{hb_face_reference_blob, hb_set_add, HB_SUBSET_FLAGS_GLYPH_NAMES, HB_SUBSET_FLAGS_NAME_LEGACY, HB_SUBSET_FLAGS_NO_PRUNE_UNICODE_RANGES, HB_SUBSET_FLAGS_RETAIN_GIDS, hb_subset_input_create_or_fail, hb_subset_input_destroy, hb_subset_input_glyph_set, hb_subset_input_set_flags, hb_subset_or_fail};
 
 use crate::{Blob, Font, HarfbuzzObject};
 
@@ -10,9 +12,20 @@ pub fn subset(font: &Font<'_>, codepoints: &[u32]) -> Vec<u8> {
     unsafe {
         // Adding glyph indices and further subsetting settings
         let input = hb_subset_input_create_or_fail();
-        let unicode_set = hb_subset_input_unicode_set(input);
+
+        // Configure subsetter
+        hb_subset_input_set_flags(
+            input,
+            (HB_SUBSET_FLAGS_RETAIN_GIDS |
+                HB_SUBSET_FLAGS_NAME_LEGACY |
+                HB_SUBSET_FLAGS_GLYPH_NAMES |
+                HB_SUBSET_FLAGS_NO_PRUNE_UNICODE_RANGES) as c_uint,
+        );
+
+        // Adding codepoints
+        let glyph_set = hb_subset_input_glyph_set(input);
         for codepoint in codepoints {
-            hb_set_add(unicode_set, *codepoint);
+            hb_set_add(glyph_set, *codepoint);
         }
 
         // TODO Pin axis of variable fonts
