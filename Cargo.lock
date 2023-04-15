@@ -140,9 +140,9 @@ checksum = "d2fabcfbdc87f4758337ca535fb41a6d701b65693ce38287d856d1674551ec9b"
 
 [[package]]
 name = "harfbuzz-bindings"
-version = "0.1.2"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "74ec4bc1852c079682112b611f313b0a8a3cfbcebe936e10f78e8f22978c0a7e"
+checksum = "eb27bf6130b8935c9f63a5ff4a6cb126e735ce5a8da9432dec852903fc784d83"
 dependencies = [
  "bindgen",
  "vcpkg",
